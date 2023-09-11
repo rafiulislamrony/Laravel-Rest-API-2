@@ -21,7 +21,19 @@ class UserController extends Controller
         // flag = 0(all)
         //All users
         //Active
-        $users = User::select('email', 'name')->where('status', 1)->get();
+
+        $query = User::select('email', 'name');
+        if($flag == 1){
+            $query->where('status',1);
+        }elseif($flag == 0){
+            // all users
+        }else{
+            return response()->json([
+                'message'=> "Invalid Parameter Passed, it can be either 1 or 0 ",
+                'status'=>0
+            ], 400);
+        }
+        $users = $query->get();
 
        if(count($users) > 0){
         $response = [
@@ -100,6 +112,21 @@ class UserController extends Controller
     public function show(string $id)
     {
         //
+        $user = User::find($id);
+        if(is_null($user)){
+            $response = [
+                'message' => 'User not found',
+                'status'=> 0,
+            ];
+        }else{
+            $response = [
+                'message' => 'User found',
+                'status'=> 1,
+                'data'=> $user
+            ];
+        }
+
+        return response()->json($response, 200);
     }
 
     /**
