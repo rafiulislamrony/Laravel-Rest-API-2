@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Exception;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Validated;
 use Illuminate\Support\Facades\Validator;
@@ -151,5 +152,32 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         //
+        $users = User::find($id);
+        if(is_null($users)){
+            $response = [
+                'message' => "User doesn't exists",
+                'status'=> 0,
+            ];
+            $responseCode = 404;
+        }else{
+            DB::beginTransaction();
+            try{
+                $users->delete();
+                DB::commit();
+                $response = [
+                    'message' => "User Deleted Successfully",
+                    'status'=> 1,
+                ];
+                $responseCode = 200;
+            }catch(\Exception $e){
+                DB::rollBack();
+                $response = [
+                    'message' => "Internal Server Error.",
+                    'status'=> 0,
+                ];
+                $responseCode = 500;
+            } 
+        }
+        return response()->json($response, $responseCode);
     }
 }
