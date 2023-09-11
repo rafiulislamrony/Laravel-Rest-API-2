@@ -144,6 +144,87 @@ class UserController extends Controller
     public function update(Request $request, string $id)
     {
         //
+        $user = User::find($id);
+        // p($request->all());
+        // die;
+        if(is_null($user)){
+            return response()->json([
+                'status'=>0,
+                'message'=> 'User does not exist'
+            ], 404);
+        }else{
+            DB::beginTransaction();
+            try{
+                $user->name = $request['name'];
+                $user->email = $request['email'];
+                $user->contact = $request['contact'];
+                $user->pincode = $request['pincode'];
+                $user->address = $request['address'];
+                $user->save();
+                DB::commit();
+            }catch(\Exception $e){
+                DB::rollBack();
+                $user = null;
+            }
+            if(is_null($user)){
+                return response()->json([
+                    'status'=>0,
+                    'message'=> 'Internal Server error',
+                    'error_msg'=> $e->getMessage()
+                ], 500);
+            }else{
+                return response()->json([
+                    'status'=> 1,
+                    'message'=> 'User Data Updated Successfully.'
+                ], 200);
+            }
+        }
+    }
+
+    public function changePassword(Request $request, $id){
+        $user = User::find($id); 
+        if(is_null($user)){
+            return response()->json([
+                'status'=>0,
+                'message'=> 'User does not exist'
+            ], 404);
+        }else{
+            if($user->password == $request['old_password']){
+                if($request['new_password'] == $request['confirm_password']){
+                    DB::beginTransaction();
+                    try{
+                        $user->password = $request['new_password'];
+                        $user->save();
+                        DB::commit();
+                    }catch(\Exception $e){
+                        $user = null;
+                        DB::rollBack();
+                    }
+                    if(is_null($user)){
+                        return response()->json([
+                            'status'=>0,
+                            'message'=> 'Internal Server error',
+                            'error_msg'=> $e->getMessage()
+                        ], 500);
+                    }else{
+                        return response()->json([
+                            'status'=> 1,
+                            'message'=> 'Password Updated Successfully.'
+                        ], 200);
+                    }
+                }else{
+                    return response()->json([
+                        'status'=>0,
+                        'message'=> 'New Password and Confirm Password not match'
+                    ], 400);
+                }
+            }else{
+                return response()->json([
+                    'status'=>0,
+                    'message'=> 'Old Password does not match'
+                ], 400);
+            }
+        }
     }
 
     /**
@@ -176,7 +257,7 @@ class UserController extends Controller
                     'status'=> 0,
                 ];
                 $responseCode = 500;
-            } 
+            }
         }
         return response()->json($response, $responseCode);
     }
